@@ -1,14 +1,23 @@
-# localized_numbers
+# fluent_typed_decimal
 
-Prepare locale-formatted Decimal text and its matching plural category with
-[ICU4X](https://github.com/unicode-org/icu4x). An independent **unpublished prototype**:
-no Bevy, Fluent, code generation, filesystem access or global language state in
-the library. `fluent-typed` is used only in consumer compatibility tests/examples.
+Decimal argument support for
+[fluent-typed](https://github.com/human-solutions/fluent-typed)
+([API documentation](https://docs.rs/fluent-typed)). This **unpublished prototype**
+prepares localized number text and a matching plural selector for its typed
+String parameters. [ICU4X](https://github.com/unicode-org/icu4x) supplies formatting
+and grammatical rules; fluent-typed keeps translation loading, typed accessors
+and Fluent message resolution.
+
+This is an argument-preparation adapter, not a replacement translation engine,
+a new native Fluent numeric type or a general-purpose formatting framework.
+The boundary is ordinary strings, so the library does not need a runtime
+dependency on fluent-typed. Compatibility is checked with both its generated
+accessors and its lower-level runtime. There is no Bevy or codegen integration.
 
 ## Minimal use
 
 ```rust
-use localized_numbers::{Decimal, NumberFormatter, PluralCategory, PluralRuleType};
+use fluent_typed_decimal::{Decimal, NumberFormatter, PluralCategory, PluralRuleType};
 
 let locale = "en".parse()?;
 let formatter = NumberFormatter::try_new(&locale, Default::default())?;
@@ -28,7 +37,7 @@ Do not parse already-localized display strings as numeric inputs.
 ## Precision and separate arguments
 
 ```rust
-use localized_numbers::{
+use fluent_typed_decimal::{
     NumberFormatter, NumberOptions, PluralRuleType, Precision,
     RoundingMode, UnsignedRoundingMode, plural_keyword,
 };
@@ -61,7 +70,7 @@ or `ar-EG-u-nu-latn` to select digits without changing the grammar language.
 ICU's compiled-data fallback applies; the constructor does not enforce an
 application-specific locale allowlist or promise every numbering system exists.
 
-## Fluent is an optional consumer, not the number engine
+## Passing arguments to fluent-typed
 
 Pass `pair.text()` and `pair.selector()` to two **String** arguments:
 
@@ -83,6 +92,19 @@ states use separate messages (`empty`), selected from domain state rather than
 rounded display text. Other languages may use different plural branch sets.
 Keep units and whole sentences in translations, not in this crate.
 
+The checkout's `examples/typed` consumer uses upstream fluent-typed generation
+in an explicit `build.rs`. Its accessor call is:
+
+```rust,ignore
+let number = formatter.localize(&value, PluralRuleType::Cardinal)?;
+let message = translations.msg_remaining(number.selector(), number.text());
+```
+
+The generated method has two String parameters: `plural` and `value`. Their
+order is determined by fluent-typed, not by this adapter. No custom argument type,
+handwritten accessor or modified generator is needed. Use the same language for
+the formatter and translations; numbering-system extensions may change digits.
+
 ## Lifecycle, precision limits and scope
 
 - Reuse a `NumberFormatter` per locale/options; it retains ICU formatting and both
@@ -103,6 +125,12 @@ Keep units and whole sentences in translations, not in this crate.
   layout. Renderers/translation engines remain responsible for bidi isolation.
 - This package is MIT; it does not change the license of a consuming application.
 
-Run `cargo test -p localized_numbers`, `cargo run -p localized_numbers --example numbers`
-or `cargo run -p localized_numbers --example fluent`. Examples and tests are local;
+From this repository's root, run
+`cargo run --manifest-path examples/typed/Cargo.toml` for the generated typed
+consumer, or `cargo run --example fluent` for the lower-level API.
+`cargo run --example numbers` shows argument preparation on its own.
+Run `cargo test --all-features` and
+`cargo test --manifest-path examples/typed/Cargo.toml` to check both packages.
+The typed consumer lives in the repository, not the library's package archive.
+Examples and tests are local;
 no registry release, repository URL or remote publication is configured yet.

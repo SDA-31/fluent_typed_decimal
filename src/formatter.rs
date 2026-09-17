@@ -1,4 +1,4 @@
-//! Reusable locale-bound ICU services; no engine, catalog loading or global cache.
+//! ICU-backed Decimal argument preparation for fluent-typed String parameters.
 use crate::{
 	DataError, Decimal, GroupingStrategy, Locale, LocalizedNumber, PluralCategory, PluralRuleType,
 	Precision, PrecisionError,
@@ -20,12 +20,14 @@ pub struct NumberOptions {
 	pub grouping: GroupingStrategy,
 }
 
-/// Reusable formatter and cardinal/ordinal rules for a caller-selected locale.
+/// Prepare Decimal text and grammatical selectors for fluent-typed arguments.
 ///
 /// Construct once per locale/options and reuse across values. There is no global
 /// language, string cache, file watcher, Fluent dependency or Bevy resource here.
 /// Locale fallback and supported numbering systems follow ICU's compiled data.
 /// An extension like `ar-u-nu-latn` changes digits, not Arabic grammar.
+/// Pass the text and selector to separate String parameters of a generated
+/// fluent-typed accessor; message loading and resolution remain upstream.
 #[derive(Debug)]
 pub struct NumberFormatter {
 	decimal: DecimalFormatter,
@@ -81,7 +83,7 @@ impl NumberFormatter {
 		self.category_prepared(&prepared, kind)
 	}
 
-	/// Prepare once, then produce localized text and matching grammar together.
+	/// Prepare once, then produce a fluent-typed argument pair: text and selector.
 	///
 	/// # Errors
 	/// Returns [`PrecisionError::PluralFractionTooLong`] instead of silently

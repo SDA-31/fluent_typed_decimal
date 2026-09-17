@@ -1,0 +1,15 @@
+[package]
+name = "fluent-typed-decimal-example"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.95"
+license = "MIT"
+publish = false
+
+[dependencies]
+# Local checkout: the Decimal adapter has not been published yet.
+fluent_typed_decimal = { path = "../.." }
+fluent-typed = { version = "0.9.0", default-features = false }
+
+[build-dependencies]
+fluent-typed = { version = "0.9.0", default-features = false, features = ["build"] }

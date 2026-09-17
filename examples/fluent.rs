@@ -1,6 +1,6 @@
-//! An ordinary Fluent consumer: the number library has no Fluent runtime dependency.
+//! Pass Decimal text and plural arguments to fluent-typed's lower-level runtime.
 use fluent_typed::prelude::{FluentArgs, L10nBundle};
-use localized_numbers::{Decimal, NumberFormatter, PluralRuleType};
+use fluent_typed_decimal::{Decimal, NumberFormatter, PluralRuleType};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
 	for (language, locale, source) in [

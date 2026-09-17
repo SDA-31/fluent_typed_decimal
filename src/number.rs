@@ -1,7 +1,10 @@
-//! Owned, immutable display text and its matching grammatical category.
+//! Decimal text and matching grammar prepared for fluent-typed String arguments.
 use crate::PluralCategory;
 
-/// A snapshot formatted for one locale and precision policy.
+/// A fluent-typed argument pair prepared for one locale and precision policy.
+///
+/// Pass [`Self::text`] and [`Self::selector`] to the corresponding generated
+/// String parameters. This does not implement native Fluent numeric conversion.
 ///
 /// Recompute after value, language, numbering-system or formatting changes.
 /// Do not capture this snapshot permanently in a language-switchable UI binding;

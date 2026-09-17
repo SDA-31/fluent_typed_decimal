@@ -1,9 +1,9 @@
 [package]
-name = "localized_numbers"
+name = "fluent_typed_decimal"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.95"
-description = "Consistent localized Decimal text and plural categories powered by ICU4X"
+description = "Decimal text and plural arguments for fluent-typed, powered by ICU4X"
 license = "MIT"
 publish = false
 

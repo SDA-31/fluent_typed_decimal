@@ -1,5 +1,5 @@
-//! Standalone number formatting without a UI or translation engine.
-use localized_numbers::{Decimal, NumberFormatter, PluralRuleType};
+//! Inspect the Decimal arguments that will be passed to fluent-typed.
+use fluent_typed_decimal::{Decimal, NumberFormatter, PluralRuleType};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
 	let value: Decimal = "12.50".parse()?;

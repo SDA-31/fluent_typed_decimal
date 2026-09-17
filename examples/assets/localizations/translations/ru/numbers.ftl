@@ -1,5 +1,4 @@
-# $value (String) - Locale-formatted number.
-# $plural (String) - CLDR category keyword.
+# Number text and CLDR category come from the Decimal adapter.
 remaining = { $plural ->
     [one] Остался { $value } предмет
     [few] Осталось { $value } предмета

@@ -1,5 +1,11 @@
 # fluent_typed_decimal
 
+[![crates.io](https://img.shields.io/crates/v/fluent_typed_decimal)](https://crates.io/crates/fluent_typed_decimal)
+[![docs.rs](https://img.shields.io/docsrs/fluent_typed_decimal)](https://docs.rs/fluent_typed_decimal/latest/fluent_typed_decimal/)
+[![CI](https://img.shields.io/github/actions/workflow/status/SDA-31/fluent_typed_decimal/ci.yml?branch=main&label=CI&logo=github)](https://github.com/SDA-31/fluent_typed_decimal/actions/workflows/ci.yml)
+[![MSRV](https://img.shields.io/crates/msrv/fluent_typed_decimal)](https://crates.io/crates/fluent_typed_decimal)
+[![License](https://img.shields.io/crates/l/fluent_typed_decimal)](LICENSE)
+
 Decimal argument support for
 [fluent-typed](https://github.com/human-solutions/fluent-typed)
 ([API documentation](https://docs.rs/fluent-typed)). This crate

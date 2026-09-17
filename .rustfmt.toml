@@ -1,0 +1,5 @@
+edition = "2024"
+hard_tabs = true
+max_width = 100
+# Exactly one blank line between adjacent functions/methods; no empty block edges.
+# Semantic separators are maintained during editing, not forced between statements.

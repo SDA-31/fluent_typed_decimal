@@ -1,0 +1,24 @@
+[package]
+name = "localized_numbers"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.95"
+description = "Consistent localized Decimal text and plural categories powered by ICU4X"
+license = "MIT"
+publish = false
+
+[features]
+default = []
+# Explicit float-to-Decimal conversion; integers never pass through f64.
+float = ["icu_decimal/ryu"]
+
+[dependencies]
+fixed_decimal = "0.7.2"
+icu_decimal = { version = "2.3.0", features = ["alloc"] }
+icu_locale_core = "2.3.0"
+icu_plurals = "2.3.0"
+icu_provider = { version = "2.3.0", features = ["sync"] }
+
+[dev-dependencies]
+# Consumer compatibility tests only; not a library/runtime dependency.
+fluent-typed = { version = "0.9.0", default-features = false }

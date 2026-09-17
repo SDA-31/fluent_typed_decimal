@@ -7,6 +7,9 @@ use std::borrow::Cow;
 /// The default preserves the input, including visible trailing zeros. Fraction
 /// policies round, remove trailing zeros, then pad to their required minimum.
 /// This type does not change the caller's Decimal or infer game state.
+/// Both number text and plural category use the prepared value: rounding `1.2`
+/// to `1` can change grammar. Required application states must still be selected
+/// from domain data, not from rounded presentation text.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Precision {
 	fraction: Option<(i16, i16)>,
@@ -15,6 +18,8 @@ pub struct Precision {
 
 impl Precision {
 	/// Preserve the input's value and visible precision without rounding.
+	/// This keeps `1` distinct from `1.0` for languages whose plural rules depend
+	/// on visible fraction digits. It is also the default policy.
 	pub const fn preserve() -> Self {
 		Self {
 			fraction: None,

@@ -4,8 +4,16 @@ version = "0.1.0"
 edition = "2024"
 rust-version = "1.95"
 description = "Decimal text and plural arguments for fluent-typed, powered by ICU4X"
+repository = "https://github.com/SDA-31/fluent_typed_decimal"
+documentation = "https://docs.rs/fluent_typed_decimal"
+readme = "README.md"
+keywords = ["fluent", "localization", "decimal", "plural", "i18n"]
+categories = ["internationalization", "localization"]
 license = "MIT"
-publish = false
+publish = ["crates-io"]
+
+[package.metadata.docs.rs]
+all-features = true
 
 [features]
 default = []

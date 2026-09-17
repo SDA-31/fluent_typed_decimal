@@ -2,7 +2,7 @@
 
 Decimal argument support for
 [fluent-typed](https://github.com/human-solutions/fluent-typed)
-([API documentation](https://docs.rs/fluent-typed)). This **unpublished prototype**
+([API documentation](https://docs.rs/fluent-typed)). This crate
 prepares localized number text and a matching plural selector for its typed
 String parameters. [ICU4X](https://github.com/unicode-org/icu4x) supplies formatting
 and grammatical rules; fluent-typed keeps translation loading, typed accessors
@@ -12,7 +12,33 @@ This is an argument-preparation adapter, not a replacement translation engine,
 a new native Fluent numeric type or a general-purpose formatting framework.
 The boundary is ordinary strings, so the library does not need a runtime
 dependency on fluent-typed. Compatibility is checked with both its generated
-accessors and its lower-level runtime. There is no Bevy or codegen integration.
+accessors and its lower-level runtime. There is no automatic engine integration
+or custom generated parameter type. The caller chooses the locale explicitly.
+
+## Install and responsibilities
+
+```toml
+[dependencies]
+fluent_typed_decimal = "0.1.0"
+```
+
+Rust 1.95 or newer is required. The default feature set is empty; enable `float`
+only if you need ICU's explicit `f64` to Decimal conversion. Locale data is
+compiled into the ICU dependencies; the library does not read files or the OS locale.
+Keep the usual fluent-typed dependencies and build script in your application:
+this crate prepares arguments, not translations.
+
+| Component | Responsibility |
+| --- | --- |
+| ICU Decimal / fixed_decimal | Decimal representation, rounding and zero padding |
+| ICU DecimalFormatter / PluralRules | Localized number text and language-specific grammatical categories |
+| This crate's `NumberFormatter` | One precision policy, reusable ICU instances and checked limits |
+| This crate's `LocalizedNumber` | Owned text and category snapshot; it does not contain the original Decimal |
+| fluent-typed / Fluent | Generated String accessors, branch matching and sentence assembly |
+
+[API documentation](https://docs.rs/fluent_typed_decimal/latest/fluent_typed_decimal/) ·
+[Generated consumer](https://github.com/SDA-31/fluent_typed_decimal/tree/main/examples/typed) ·
+[Lower-level consumer](https://github.com/SDA-31/fluent_typed_decimal/blob/main/examples/fluent.rs)
 
 ## Minimal use
 
@@ -92,6 +118,13 @@ states use separate messages (`empty`), selected from domain state rather than
 rounded display text. Other languages may use different plural branch sets.
 Keep units and whole sentences in translations, not in this crate.
 
+For a String selector, Fluent compares literal keys: `"few"` selects `[few]`.
+It does not compute another plural category. Unknown or missing keys fall back
+to the branch marked `*`; `other` is a conventional category name, not the
+fallback mechanism itself. A misspelled `[five]` is an ordinary String key and
+will not match `"few"`. String argument typing does not validate the spelling of
+category keys. Numeric `[1]` and String `[one]` are not interchangeable.
+
 The checkout's `examples/typed` consumer uses upstream fluent-typed generation
 in an explicit `build.rs`. Its accessor call is:
 
@@ -105,6 +138,31 @@ order is determined by fluent-typed, not by this adapter. No custom argument typ
 handwritten accessor or modified generator is needed. Use the same language for
 the formatter and translations; numbering-system extensions may change digits.
 
+`pair.text()` borrows `&str` from the owned snapshot; `pair.selector()` maps its
+typed `PluralCategory` to a static keyword such as `"few"`. Neither getter
+formats or clones a string. The generated accessor borrows these arguments for
+the call and returns the assembled `String`. `LocalizedNumber` itself is not
+passed to Fluent and has no implicit conversion into `FluentNumber`.
+
+The example above is excluded from standalone doctests because its types are
+generated from consumer-owned FTL. The repository's typed consumer compiles and
+tests that call on every supported CI platform; other self-contained examples
+on this page are executable doctests.
+
+## Arabic digits, mixed text and RTL
+
+Number formatting, text direction and UI layout are separate responsibilities.
+For example, `ar-EG-u-nu-arab` selects Arabic-Indic digits; `ar-EG-u-nu-latn`
+selects Latin digits while keeping Arabic grammatical rules. The adapter does
+not reverse strings or choose text alignment from the digit system.
+
+Fluent's default isolation marks protect interpolated text in mixed-direction
+sentences. This adapter returns number text without adding those marks; the
+translation engine adds them at interpolation. Preserve that behavior unless
+your renderer deliberately handles isolation itself. Correct visual bidi order,
+Arabic glyph shaping, suitable fonts and mirrored UI layout remain renderer and
+application work. Supporting Arabic digits is not a claim of complete RTL UI.
+
 ## Lifecycle, precision limits and scope
 
 - Reuse a `NumberFormatter` per locale/options; it retains ICU formatting and both
@@ -112,6 +170,8 @@ the formatter and translations; numbering-system extensions may change digits.
 - `LocalizedNumber` is an owned snapshot. On value, locale, numbering-system or
   precision changes, recompute from the original value. UI movement/fading alone
   does not require formatting again. Deferred bindings must not capture stale text.
+  Keep the source Decimal and recompute using the active translation language;
+  the adapter cannot detect a mismatch with the catalog or switch locales for you.
 - ICU 2.x converts at most 18 fractional digits into plural operands. Selection
   returns a typed error above that **after** precision preparation, even for
   trailing zeros. Explicitly round first, or use text-only `format`, which has no
@@ -132,5 +192,18 @@ consumer, or `cargo run --example fluent` for the lower-level API.
 Run `cargo test --all-features` and
 `cargo test --manifest-path examples/typed/Cargo.toml` to check both packages.
 The typed consumer lives in the repository, not the library's package archive.
-Examples and tests are local;
-no registry release, repository URL or remote publication is configured yet.
+It uses a path dependency to exercise this checkout; application installations
+use the registry dependency shown above.
+
+## Verification and license
+
+CI checks Linux, Windows and macOS on stable Rust, plus Linux on Rust 1.95.0.
+It compiles and tests both the adapter and upstream-generated EN/ES/RU/AR consumer,
+including preserved fractional zeros, rounding, large integers, Arabic digits,
+cardinal/ordinal categories and Fluent's literal-key/default-branch behavior.
+Formatting, Clippy, Rustdoc and package verification run separately. There is no
+automatic publication job or registry token in CI.
+
+[MIT](https://github.com/SDA-31/fluent_typed_decimal/blob/main/LICENSE). This covers
+the library and its examples, not a consuming application or translation assets
+supplied by that application. Dependency licenses remain their own.

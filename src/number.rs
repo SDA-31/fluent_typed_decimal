@@ -5,11 +5,25 @@ use crate::PluralCategory;
 ///
 /// Pass [`Self::text`] and [`Self::selector`] to the corresponding generated
 /// String parameters. This does not implement native Fluent numeric conversion.
+/// This is a type owned by `fluent_typed_decimal`, not by fluent-typed. It stores
+/// the completed String and ICU category; the original Decimal is not retained.
 ///
 /// Recompute after value, language, numbering-system or formatting changes.
 /// Do not capture this snapshot permanently in a language-switchable UI binding;
 /// retain the original numeric input instead. No native Fluent number conversion
 /// is provided: a category keyword is not an exact numeric selector.
+///
+/// ```
+/// use fluent_typed_decimal::{NumberFormatter, PluralCategory, PluralRuleType};
+/// let formatter = NumberFormatter::try_new(&"ru".parse()?, Default::default())?;
+/// let number = formatter.localize(&22.into(), PluralRuleType::Cardinal)?;
+/// let text: &str = number.text();
+/// let selector: &'static str = number.selector();
+/// assert_eq!(text, "22");
+/// assert_eq!(selector, "few");
+/// assert_eq!(number.category(), PluralCategory::Few);
+/// # Ok::<(), Box<dyn std::error::Error>>(())
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LocalizedNumber {
 	pub(crate) text: String,
@@ -18,6 +32,7 @@ pub struct LocalizedNumber {
 
 impl LocalizedNumber {
 	/// Locale-formatted number, without units or surrounding prose.
+	/// Borrows this snapshot's String; no formatting, allocation or cloning occurs.
 	pub fn text(&self) -> &str {
 		&self.text
 	}
@@ -30,6 +45,9 @@ impl LocalizedNumber {
 	/// CLDR keyword for a string selector, such as `one` or `few`.
 	///
 	/// This is not the displayed number, a translated word, or a numeric `[0]` case.
+	/// It maps the stored enum to a static keyword without recomputing grammar.
+	/// Fluent compares that keyword literally to FTL variant identifiers; unmatched
+	/// selectors use the branch marked `*`, so a misspelled key can select fallback.
 	pub fn selector(&self) -> &'static str {
 		plural_keyword(self.category)
 	}
@@ -43,6 +61,8 @@ impl LocalizedNumber {
 /// Map a typed ICU category to its stable CLDR string-selector keyword.
 ///
 /// This does not select a category from a number or parse localized digits.
+/// Keywords are `zero`, `one`, `two`, `few`, `many` and `other`. They are protocol
+/// values, not translatable prose; a language need not use all six categories.
 pub const fn plural_keyword(category: PluralCategory) -> &'static str {
 	match category {
 		PluralCategory::Zero => "zero",

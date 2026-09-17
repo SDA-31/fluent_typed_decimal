@@ -11,6 +11,10 @@ use icu_plurals::{PluralOperands, PluralRules};
 const MAX_PLURAL_FRACTION_DIGITS: u16 = 18;
 
 /// Immutable presentation policy applied by a [`NumberFormatter`].
+///
+/// Construct with [`Default`] and set the fields you need. Precision defaults to
+/// preserving the input's visible zeros; grouping follows the selected locale.
+/// Changing policy means constructing a new formatter, not mutating a snapshot.
 #[derive(Debug, Clone, Copy, Default)]
 #[non_exhaustive]
 pub struct NumberOptions {
@@ -28,6 +32,9 @@ pub struct NumberOptions {
 /// An extension like `ar-u-nu-latn` changes digits, not Arabic grammar.
 /// Pass the text and selector to separate String parameters of a generated
 /// fluent-typed accessor; message loading and resolution remain upstream.
+/// The formatter does not know the catalog's active language: keep both aligned
+/// and rebuild this service when the application's locale or options change.
+/// It is `Send + Sync`, but owns no engine resource or cache of formatted values.
 #[derive(Debug)]
 pub struct NumberFormatter {
 	decimal: DecimalFormatter,
@@ -42,6 +49,7 @@ impl NumberFormatter {
 	/// # Errors
 	/// Returns ICU's [`DataError`] if required formatter or rule data cannot load.
 	/// Locale parsing is explicit and belongs to the caller; this never reads the OS.
+	/// A successful load may use ICU locale fallback, not an exact-data match.
 	pub fn try_new(locale: &Locale, options: NumberOptions) -> Result<Self, DataError> {
 		Ok(Self {
 			decimal: DecimalFormatter::try_new(locale.into(), options.grouping.into())?,
@@ -55,6 +63,9 @@ impl NumberFormatter {
 	///
 	/// Units and prose belong to the caller's translation system. The original
 	/// Decimal is unchanged; this applies the formatter's precision policy.
+	/// The returned String is intended for a displayed `(String)` FTL parameter.
+	/// Use this when no grammatical selector is needed; it does not create a
+	/// [`LocalizedNumber`] or evaluate plural rules.
 	///
 	/// # Errors
 	/// Returns [`PrecisionError::RoundingOverflow`] if rounding exceeds Decimal's
@@ -68,6 +79,8 @@ impl NumberFormatter {
 	/// Select grammar using the same precision policy as [`Self::format`].
 	///
 	/// For paired text/category output, prefer [`Self::localize`] to prepare once.
+	/// The result is an ICU enum, not localized text. [`crate::plural_keyword`]
+	/// converts it to a literal key for a separate `(String)` FTL selector.
 	///
 	/// # Errors
 	/// Rejects more than 18 visible fraction digits after preparation, including
@@ -84,6 +97,10 @@ impl NumberFormatter {
 	}
 
 	/// Prepare once, then produce a fluent-typed argument pair: text and selector.
+	///
+	/// Pass [`LocalizedNumber::selector`] and [`LocalizedNumber::text`] to the
+	/// matching generated String arguments. The upstream accessor does not accept
+	/// the snapshot directly. Recompute from the original Decimal on locale changes.
 	///
 	/// # Errors
 	/// Returns [`PrecisionError::PluralFractionTooLong`] instead of silently
